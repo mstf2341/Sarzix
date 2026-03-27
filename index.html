@@ -3,101 +3,107 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SARZIX - النسخة الشاملة</title>
+    <title>SARZIX - النسخة الأصلية</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        :root { --primary: #1da1f2; --black: #000; --white: #fff; --gray: #f5f8fa; }
-        body { font-family: 'Segoe UI', sans-serif; margin: 0; background: var(--white); overflow-x: hidden; }
-        
-        /* شاشات الدخول */
-        #auth-screen { position: fixed; inset: 0; background: white; z-index: 5000; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
-        .auth-card { width: 100%; max-width: 400px; text-align: center; }
-        .auth-card h1 { color: var(--primary); font-size: 3rem; margin-bottom: 20px; }
-        input { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 25px; box-sizing: border-box; }
-        .btn-main { background: var(--primary); color: white; border: none; padding: 12px; border-radius: 25px; width: 100%; font-weight: bold; cursor: pointer; margin-top: 10px; }
-        
-        /* التصميم الأساسي */
-        header { display: flex; justify-content: space-between; align-items: center; padding: 10px 15px; border-bottom: 1px solid #eee; position: sticky; top: 0; background: white; z-index: 100; }
-        .page { display: none; padding: 15px; padding-bottom: 80px; }
+        :root { --primary: #1da1f2; --black: #000; --white: #fff; --gray: #f5f8fa; --dark-gray: #657786; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; margin: 0; background: var(--white); overflow-x: hidden; }
+
+        /* شاشة الدخول الفخمة */
+        #auth-screen { position: fixed; inset: 0; background: white; z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 30px; }
+        .auth-logo { font-size: 4rem; color: var(--primary); margin-bottom: 20px; }
+        .auth-input { width: 100%; max-width: 350px; padding: 15px; margin: 10px 0; border: 1px solid #e1e8ed; border-radius: 30px; background: var(--gray); font-size: 1rem; outline: none; }
+        .auth-btn { width: 100%; max-width: 350px; padding: 15px; background: var(--primary); color: white; border: none; border-radius: 30px; font-weight: bold; font-size: 1.1rem; cursor: pointer; margin-top: 15px; }
+
+        /* الهيدر */
+        header { display: flex; justify-content: space-between; align-items: center; padding: 10px 20px; border-bottom: 1px solid #eff3f4; position: sticky; top: 0; background: rgba(255,255,255,0.9); backdrop-filter: blur(5px); z-index: 1000; }
+        header h1 { font-size: 20px; color: var(--primary); margin: 0; letter-spacing: 1px; }
+
+        /* الأقسام الصفحات */
+        .page { display: none; padding-bottom: 80px; }
         .active-page { display: block; }
-        
-        /* التغريدات */
-        .post { padding: 15px; border-bottom: 1px solid #eee; }
-        .post-user { font-weight: bold; color: var(--black); }
-        .post-content { margin: 10px 0; font-size: 1.1rem; }
-        .post-actions { display: flex; gap: 25px; color: #555; }
-        
-        /* التنقل السفلي */
-        .bottom-nav { position: fixed; bottom: 0; width: 100%; background: white; border-top: 1px solid #eee; display: flex; justify-content: space-around; padding: 15px 0; z-index: 1000; }
-        .bottom-nav i { font-size: 22px; color: #555; cursor: pointer; }
+
+        /* نظام التغريدات (Feed) */
+        .post { padding: 15px; border-bottom: 1px solid #eff3f4; display: flex; gap: 12px; }
+        .post-avatar { width: 48px; height: 48px; background: #eee; border-radius: 50%; flex-shrink: 0; }
+        .post-info { flex: 1; }
+        .post-user { font-weight: bold; font-size: 15px; }
+        .post-username { color: var(--dark-gray); font-weight: normal; margin-right: 5px; }
+        .post-text { margin-top: 5px; line-height: 1.4; color: #0f1419; }
+        .post-actions { display: flex; justify-content: space-between; max-width: 300px; margin-top: 12px; color: var(--dark-gray); }
+
+        /* شريط التنقل السفلي */
+        .bottom-nav { position: fixed; bottom: 0; width: 100%; background: white; border-top: 1px solid #eff3f4; display: flex; justify-content: space-around; padding: 15px 0; z-index: 2000; }
+        .bottom-nav i { font-size: 24px; color: #0f1419; cursor: pointer; transition: 0.2s; }
         .bottom-nav i.active { color: var(--primary); }
 
+        /* زر الإضافة العائم */
+        .fab { position: fixed; bottom: 85px; left: 20px; background: var(--primary); color: white; width: 56px; height: 56px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); cursor: pointer; z-index: 1500; }
+
         .hidden { display: none !important; }
-        .fab { position: fixed; bottom: 85px; left: 20px; background: var(--primary); color: white; width: 55px; height: 55px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; box-shadow: 0 4px 10px rgba(0,0,0,0.2); cursor: pointer; }
     </style>
 </head>
 <body>
 
 <div id="auth-screen">
-    <div class="auth-card" id="login-box">
-        <h1>SARZIX</h1>
-        <div id="register-fields" class="hidden">
-            <input type="text" id="reg-name" placeholder="الاسم الكامل">
-            <input type="text" id="reg-username" placeholder="اسم المستخدم (بالإنجليزي)">
-        </div>
-        <input type="email" id="auth-email" placeholder="البريد الإلكتروني">
-        <input type="password" id="auth-pass" placeholder="كلمة المرور">
-        <button class="btn-main" id="auth-btn" onclick="handleAuth()">دخول</button>
-        <p id="toggle-text" style="margin-top:15px; cursor:pointer; color:var(--primary);" onclick="toggleAuthMode()">ليس لديك حساب؟ تسجيل جديد</p>
+    <div class="auth-logo"><i class="fa-brands fa-twitter"></i></div>
+    <h2 style="margin-bottom:30px;">شاهد ما يحدث الآن في SARZIX</h2>
+    <div id="register-fields" class="hidden" style="width: 100%; text-align: center;">
+        <input type="text" id="reg-name" class="auth-input" placeholder="الاسم الكامل">
+        <input type="text" id="reg-username" class="auth-input" placeholder="اسم المستخدم (بالإنجليزي)">
     </div>
+    <input type="email" id="auth-email" class="auth-input" placeholder="البريد الإلكتروني">
+    <input type="password" id="auth-pass" class="auth-input" placeholder="كلمة المرور">
+    <button class="auth-btn" id="auth-btn" onclick="handleAuth()">تسجيل الدخول</button>
+    <p id="toggle-text" style="margin-top:20px; color:var(--primary); cursor:pointer;" onclick="toggleAuthMode()">ليس لديك حساب؟ إنشاء واحد الآن</p>
 </div>
 
 <div id="main-content" class="hidden">
     <header>
-        <i class="fa fa-user-shield hidden" id="admin-icon" style="color:red;" onclick="switchPage('admin')"></i>
-        <h2 style="color:var(--primary); margin:0;">SARZIX</h2>
-        <i class="fa-regular fa-paper-plane" onclick="alert('الخاص قريباً')"></i>
+        <i class="fa-solid fa-user-shield hidden" id="admin-icon" style="color:red; font-size: 1.2rem;" onclick="switchPage('admin')"></i>
+        <h1>SARZIX</h1>
+        <i class="fa-regular fa-envelope" style="font-size: 1.4rem;" onclick="alert('قريباً')"></i>
     </header>
 
     <div id="home" class="page active-page">
-        <div id="feed">جارِ تحميل المنشورات...</div>
-    </div>
-
-    <div id="reels" class="page">
-        <div style="height:70vh; background:#000; border-radius:15px; display:flex; align-items:center; justify-content:center; color:white;">
-            <p>لا توجد فيديوهات حالياً</p>
+        <div style="display:flex; border-bottom:1px solid #eff3f4; text-align:center;">
+            <div style="flex:1; padding:15px; font-weight:bold; border-bottom: 4px solid var(--primary);">لك</div>
+            <div style="flex:1; padding:15px; color:var(--dark-gray);">متابعة</div>
         </div>
+        <div id="feed"></div>
     </div>
 
-    <div id="predictions" class="page">
-        <h3>🏆 جدول المباريات والتوقعات</h3>
+    <div id="predictions" class="page" style="padding: 20px;">
+        <h3 style="border-bottom: 2px solid var(--primary); padding-bottom: 10px;">🏆 التوقعات والمباريات</h3>
         <div id="match-list"></div>
     </div>
 
     <div id="profile" class="page">
-        <div style="text-align:center;">
-            <div style="width:80px; height:80px; background:#eee; border-radius:50%; margin:auto;"></div>
-            <h2 id="p-name">...</h2>
-            <p id="p-username" style="color:#777;"></p>
-            <hr>
-            <button class="btn-main" style="background:#eee; color:black;" onclick="auth.signOut()">تسجيل خروج</button>
+        <div style="height:120px; background:var(--primary);"></div>
+        <div style="padding: 15px; margin-top: -50px;">
+            <div style="width:80px; height:80px; border:4px solid white; background:#eee; border-radius:50%;"></div>
+            <h2 id="p-name" style="margin: 10px 0 0 0;">...</h2>
+            <p id="p-username" style="color:var(--dark-gray); margin: 0;">@username</p>
+            <button onclick="auth.signOut()" style="margin-top:15px; padding:8px 20px; border-radius:20px; border:1px solid #ddd; background:white;">تسجيل خروج</button>
         </div>
     </div>
 
-    <div id="admin" class="page">
-        <h2 style="color:red;">لوحة التحكم</h2>
-        <input type="text" id="m-teams" placeholder="فريق 1 vs فريق 2">
-        <input type="date" id="m-date">
-        <button class="btn-main" onclick="addMatch()">إضافة مباراة</button>
+    <div id="admin" class="page" style="padding:20px;">
+        <h2 style="color:red;">لوحة التحكم (SARZIX)</h2>
+        <div style="background:#fff5f5; padding:15px; border-radius:15px; border: 1px dashed red;">
+            <input type="text" id="m-teams" class="auth-input" placeholder="الفريق 1 vs الفريق 2">
+            <input type="date" id="m-date" class="auth-input">
+            <button class="auth-btn" style="background:red;" onclick="addMatch()">إضافة مباراة للجدول</button>
+        </div>
     </div>
 
-    <div class="fab" onclick="addNewPost()"><i class="fa fa-plus"></i></div>
+    <div class="fab" onclick="addNewPost()"><i class="fa-solid fa-plus"></i></div>
 
     <nav class="bottom-nav">
-        <i class="fa fa-home active" onclick="switchPage('home', this)"></i>
-        <i class="fa fa-play" onclick="switchPage('reels', this)"></i>
-        <i class="fa fa-trophy" onclick="switchPage('predictions', this)"></i>
-        <i class="fa fa-user" onclick="switchPage('profile', this)"></i>
+        <i class="fa-solid fa-house active" onclick="switchPage('home', this)"></i>
+        <i class="fa-solid fa-magnifying-glass" onclick="switchPage('search', this)"></i>
+        <i class="fa-solid fa-trophy" onclick="switchPage('predictions', this)"></i>
+        <i class="fa-solid fa-user" onclick="switchPage('profile', this)"></i>
     </nav>
 </div>
 
@@ -118,64 +124,48 @@
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
+    let isLogin = true;
+    let myData = null;
 
-    let isLoginMode = true;
-    let userData = null;
-
-    // تبديل بين دخول وتسجيل جديد
     window.toggleAuthMode = () => {
-        isLoginMode = !isLoginMode;
+        isLogin = !isLogin;
         document.getElementById('register-fields').classList.toggle('hidden');
-        document.getElementById('auth-btn').innerText = isLoginMode ? "دخول" : "إنشاء حساب";
-        document.getElementById('toggle-text').innerText = isLoginMode ? "ليس لديك حساب؟ تسجيل جديد" : "لديك حساب؟ سجل دخول";
+        document.getElementById('auth-btn').innerText = isLogin ? "تسجيل الدخول" : "إنشاء حساب";
     };
 
-    // معالجة الدخول والاشتراك
     window.handleAuth = async () => {
         const email = document.getElementById('auth-email').value;
         const pass = document.getElementById('auth-pass').value;
-
         try {
-            if (isLoginMode) {
+            if(isLogin) {
                 await signInWithEmailAndPassword(auth, email, pass);
             } else {
-                const name = document.getElementById('reg-name').value;
-                const userN = document.getElementById('reg-username').value;
+                const n = document.getElementById('reg-name').value;
+                const u = document.getElementById('reg-username').value;
                 const res = await createUserWithEmailAndPassword(auth, email, pass);
-                // حفظ البيانات في Firestore
-                await setDoc(doc(db, "users", res.user.uid), {
-                    name: name,
-                    username: userN,
-                    email: email,
-                    role: 'user'
-                });
+                await setDoc(doc(db, "users", res.user.uid), { name: n, username: u, email: email });
             }
-        } catch (e) { alert("خطأ: " + e.message); }
+        } catch(e) { alert(e.message); }
     };
 
-    // مراقبة حالة المستخدم
     onAuthStateChanged(auth, async (user) => {
-        if (user) {
+        if(user) {
             document.getElementById('auth-screen').classList.add('hidden');
             document.getElementById('main-content').classList.remove('hidden');
-            const d = await getDoc(doc(db, "users", user.uid));
-            userData = d.data();
-            
-            if (userData) {
-                document.getElementById('p-name').innerText = userData.name;
-                document.getElementById('p-username').innerText = "@" + userData.username;
+            const snap = await getDoc(doc(db, "users", user.uid));
+            myData = snap.data();
+            if(myData) {
+                document.getElementById('p-name').innerText = myData.name;
+                document.getElementById('p-username').innerText = "@" + myData.username;
             }
-            if (user.email === "sarzix2005@gmail.com") document.getElementById('admin-icon').classList.remove('hidden');
-            
-            loadPosts();
-            loadMatches();
+            if(user.email === "sarzix2005@gmail.com") document.getElementById('admin-icon').classList.remove('hidden');
+            loadContent();
         } else {
             document.getElementById('auth-screen').classList.remove('hidden');
             document.getElementById('main-content').classList.add('hidden');
         }
     });
 
-    // التنقل
     window.switchPage = (p, el) => {
         document.querySelectorAll('.page').forEach(page => page.classList.remove('active-page'));
         document.getElementById(p).classList.add('active-page');
@@ -185,55 +175,58 @@
         }
     };
 
-    // إضافة منشور
     window.addNewPost = async () => {
-        const txt = prompt("ماذا يدور في ذهنك؟");
-        if(txt) {
+        const text = prompt("ماذا يدور في ذهنك؟");
+        if(text) {
             await addDoc(collection(db, "posts"), {
-                content: txt,
-                username: userData.username,
+                text: text,
+                username: myData.username,
+                name: myData.name,
                 time: Date.now()
             });
         }
     };
 
-    function loadPosts() {
-        const q = query(collection(db, "posts"), orderBy("time", "desc"));
-        onSnapshot(q, (s) => {
+    function loadContent() {
+        onSnapshot(query(collection(db, "posts"), orderBy("time", "desc")), (s) => {
             const feed = document.getElementById('feed');
             feed.innerHTML = "";
-            s.forEach(doc => {
-                const p = doc.data();
-                feed.innerHTML += `<div class="post">
-                    <div class="post-user">@${p.username}</div>
-                    <div class="post-content">${p.content}</div>
-                    <div class="post-actions"><i class="fa fa-heart"></i> <i class="fa fa-comment"></i></div>
+            s.forEach(d => {
+                const p = d.data();
+                feed.innerHTML += `
+                    <div class="post">
+                        <div class="post-avatar"></div>
+                        <div class="post-info">
+                            <div class="post-user">${p.name} <span class="post-username">@${p.username}</span></div>
+                            <div class="post-text">${p.text}</div>
+                            <div class="post-actions">
+                                <i class="fa-regular fa-comment"></i> <i class="fa-regular fa-heart"></i> <i class="fa-solid fa-share-nodes"></i>
+                            </div>
+                        </div>
+                    </div>`;
+            });
+        });
+
+        onSnapshot(collection(db, "matches"), (s) => {
+            const list = document.getElementById('match-list');
+            list.innerHTML = "";
+            s.forEach(d => {
+                const m = d.data();
+                list.innerHTML += `<div style="padding:15px; background:var(--gray); border-radius:15px; margin-top:10px;">
+                    <div style="font-weight:bold;">${m.teams}</div>
+                    <div style="color:var(--dark-gray); font-size:0.9rem;">${m.date}</div>
+                    <button style="margin-top:10px; width:100%; border-radius:20px; border:1px solid var(--primary); color:var(--primary); background:white; padding:5px;">توقع الآن</button>
                 </div>`;
             });
         });
     }
 
-    // إدارة المباريات
     window.addMatch = async () => {
         const t = document.getElementById('m-teams').value;
         const d = document.getElementById('m-date').value;
         await addDoc(collection(db, "matches"), { teams: t, date: d });
-        alert("تمت الإضافة");
+        alert("تمت الإضافة بنجاح");
     };
-
-    function loadMatches() {
-        onSnapshot(collection(db, "matches"), (s) => {
-            const list = document.getElementById('match-list');
-            list.innerHTML = "";
-            s.forEach(doc => {
-                const m = doc.data();
-                list.innerHTML += `<div style="border:1px solid #eee; padding:10px; margin-bottom:10px; border-radius:10px;">
-                    <b>${m.teams}</b> - ${m.date}
-                    <button style="float:left;" onclick="alert('سجل توقعك!')">توقع</button>
-                </div>`;
-            });
-        });
-    }
 
 </script>
 </body>
