@@ -1,146 +1,617 @@
-<!DOCTYPE html>
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { 
+  Home, MessageCircle, Trophy, Search, User, 
+  Shield, Heart, Repeat, Flame, Loader2,
+  Clapperboard, Plus, Trash2, Calendar, Edit3, Check, X, Settings, 
+  UserPlus, Camera, MoreVertical, SearchIcon, Feather, Send, Clock, BarChart3, Upload
+} from 'lucide-react';
+import { initializeApp } from 'firebase/app';
+import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken, signOut } from 'firebase/auth';
+import { getFirestore, doc, setDoc, getDoc, collection, onSnapshot, updateDoc, deleteDoc, query, where, addDoc, arrayUnion } from 'firebase/firestore';
 
-<html lang="ar" dir="rtl">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>SARZIX | المنصة الرياضية</title>
+// --- Firebase Configuration ---
+const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+const appId = typeof __app_id !== 'undefined' ? __app_id : 'sarzix-ultimate-v2';
 
-<script src="[https://cdn.tailwindcss.com](https://cdn.tailwindcss.com)"></script>
-<script src="[https://unpkg.com/lucide@latest](https://unpkg.com/lucide@latest)"></script>
-<script src="[https://unpkg.com/react@18/umd/react.production.min.js](https://unpkg.com/react@18/umd/react.production.min.js)"></script>
-<script src="[https://unpkg.com/react-dom@18/umd/react-dom.production.min.js](https://unpkg.com/react-dom@18/umd/react-dom.production.min.js)"></script>
-<script src="[https://unpkg.com/@babel/standalone/babel.min.js](https://unpkg.com/@babel/standalone/babel.min.js)"></script>
+export default function App() {
+  const [user, setUser] = useState(null);
+  const [currentUserData, setCurrentUserData] = useState(null);
+  const [allUsers, setAllUsers] = useState([]);
+  const [view, setView] = useState('auth'); 
+  const [loading, setLoading] = useState(true);
+  const [posts, setPosts] = useState([]);
+  const [stories, setStories] = useState([]);
+  const [reels, setReels] = useState([]);
+  const [matches, setMatches] = useState([]);
+  const [toast, setToast] = useState(null);
+  const [editingProfile, setEditingProfile] = useState(false);
+  const [adminTargetUser, setAdminTargetUser] = useState(null);
+  const [adminSearchOpen, setAdminSearchOpen] = useState(false);
+  const [adminSearchQuery, setAdminSearchQuery] = useState('');
+  const [feedTab, setFeedTab] = useState('forYou'); // 'forYou' or 'following'
+  const [showPublisher, setShowPublisher] = useState(false);
+  const [publishType, setPublishType] = useState('post'); // 'post', 'story', 'reel'
+  const [showMatchCreator, setShowMatchCreator] = useState(false);
 
-<script src="[https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js](https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js)"></script>
-<script src="[https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js](https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js)"></script>
-<script src="[https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js](https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js)"></script>
+  const showToast = useCallback((msg) => {
+    setToast(msg);
+    setTimeout(() => setToast(null), 3000);
+  }, []);
 
-<style>
-    @import url('[https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap](https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap)');
-    body { font-family: 'Cairo', sans-serif; background-color: #020617; color: white; margin: 0; overflow: hidden; }
-    .glass-panel { background: rgba(15, 23, 42, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.05); }
-    .emerald-glow { box-shadow: 0 0 20px rgba(16, 185, 129, 0.2); }
-    .no-scrollbar::-webkit-scrollbar { display: none; }
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-    .animate-in { animation: fadeIn 0.4s ease forwards; }
-</style>
-</head>
-<body>
-<div id="root"></div>
+  const formatNumber = (num) => {
+    if (!num) return "0";
+    if (num >= 1000000) return (num / 1000000).toFixed(1).replace(/\.0$/, '') + 'M';
+    if (num >= 1000) return (num / 1000).toFixed(1).replace(/\.0$/, '') + 'K';
+    return num.toString();
+  };
 
-<script type="text/babel">
-    const firebaseConfig = {
-        apiKey: "AIzaSyAVf3hKrYV0FbH9bOou8WazfCpP4ryKckI",
-        authDomain: "sarzix.firebaseapp.com",
-        projectId: "sarzix",
-        storageBucket: "sarzix.firebasestorage.app",
-        messagingSenderId: "341694908206",
-        appId: "1:341694908206:web:14f31e49094205cf269cbf"
-    };
-
-    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
-    const db = firebase.firestore();
-    const auth = firebase.auth();
-    const APP_ID = 'sarzix_core_v1';
-
-    const Icon = ({ name, size = 24, className = "" }) => {
-        React.useEffect(() => { if (window.lucide) window.lucide.createIcons(); }, [name]);
-        return <i data-lucide={name.toLowerCase()} className={className} style={{ width: size, height: size }}></i>;
-    };
-
-    function App() {
-        const [user, setUser] = React.useState(null);
-        const [posts, setPosts] = React.useState([]);
-        const [view, setView] = React.useState('home');
-        const [inputText, setInputText] = React.useState("");
-        const [loading, setLoading] = React.useState(true);
-
-        React.useEffect(() => {
-            const unsubscribe = auth.onAuthStateChanged(async (u) => {
-                if (u) {
-                    setUser(u);
-                    const unsubPosts = db.collection('artifacts').doc(APP_ID).collection('public').doc('data').collection('feed').orderBy('timestamp', 'desc').onSnapshot(snap => {
-                        setPosts(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-                        setLoading(false);
-                    }, err => { setLoading(false); });
-                    return () => unsubPosts();
-                } else {
-                    await auth.signInAnonymously();
-                }
-            });
-            return () => unsubscribe();
-        }, []);
-
-        const sendPost = async () => {
-            if (!inputText.trim()) return;
-            try {
-                await db.collection('artifacts').doc(APP_ID).collection('public').doc('data').collection('feed').add({
-                    content: inputText,
-                    author: "SARZIX Admin",
-                    timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-                    likes: 0
-                });
-                setInputText("");
-            } catch (e) { alert("تأكد من تفعيل Firestore Rules."); }
-        };
-
-        const handleLike = async (id, current) => {
-            await db.collection('artifacts').doc(APP_ID).collection('public').doc('data').collection('feed').doc(id).update({ likes: (current || 0) + 1 });
-        };
-
-        if (loading && !user) return <div className="h-screen bg-slate-950 flex items-center justify-center"><h1 className="text-4xl font-black italic text-emerald-500 animate-pulse">SARZIX</h1></div>;
-
-        return (
-            <div className="max-w-md mx-auto h-screen flex flex-col bg-slate-950 border-x border-slate-900 relative">
-                <header className="p-6 flex justify-between items-center bg-slate-950/80 backdrop-blur-md sticky top-0 z-50">
-                    <div>
-                        <h1 className="text-2xl font-black italic text-white">SARZIX</h1>
-                        <p className="text-[10px] text-emerald-500 font-bold uppercase tracking-widest">Global Sports</p>
-                    </div>
-                    <div className="flex gap-2">
-                        <div className="p-2 rounded-xl bg-slate-900 text-slate-400"><Icon name="Search" size={18}/></div>
-                        <div className="p-2 rounded-xl bg-emerald-500 text-slate-950 emerald-glow"><Icon name="Zap" size={18}/></div>
-                    </div>
-                </header>
-
-                <main className="flex-1 overflow-y-auto no-scrollbar p-4 pb-40 space-y-4">
-                    {posts.map(post => (
-                        <div key={post.id} className="glass-panel p-5 rounded-[2rem] animate-in">
-                            <div className="flex items-center gap-3 mb-3">
-                                <div className="w-10 h-10 rounded-2xl bg-emerald-500 flex items-center justify-center text-slate-950 font-black italic">S</div>
-                                <div className="flex-1"><h4 className="text-xs font-black text-white">{post.author}</h4></div>
-                            </div>
-                            <p className="text-sm text-slate-300">{post.content}</p>
-                            <div className="flex gap-4 mt-4 pt-3 border-t border-white/5">
-                                <button onClick={() => handleLike(post.id, post.likes)} className="flex items-center gap-1.5 text-slate-500 hover:text-emerald-400">
-                                    <Icon name="Heart" size={16}/><span className="text-[10px] font-bold">{post.likes || 0}</span>
-                                </button>
-                            </div>
-                        </div>
-                    ))}
-                </main>
-
-                <div className="fixed bottom-0 left-0 right-0 max-w-md mx-auto p-4 z-50">
-                    <div className="glass-panel rounded-[2.5rem] p-3 shadow-2xl">
-                        <div className="flex items-center gap-2 bg-slate-950 rounded-[1.8rem] px-4 py-1 mb-3 border border-white/5">
-                            <input value={inputText} onChange={(e) => setInputText(e.target.value)} placeholder="ماذا يحدث في عالم الرياضة؟" className="bg-transparent flex-1 py-3 text-xs outline-none text-white font-medium" />
-                            <button onClick={sendPost} className="w-10 h-10 rounded-xl bg-emerald-500 text-slate-950 flex items-center justify-center"><Icon name="Send" size={18}/></button>
-                        </div>
-                        <div className="flex justify-around items-center py-1 text-slate-500">
-                            <button className="text-emerald-500"><Icon name="Home" size={24}/></button>
-                            <button><Icon name="Trophy" size={24}/></button>
-                            <button><Icon name="Compass" size={24}/></button>
-                            <button><Icon name="User" size={24}/></button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        );
+  // Helper to handle image selection and convert to base64
+  const handleImageUpload = (e, callback) => {
+    const file = e.target.files[0];
+    if (file) {
+      if (file.size > 1024 * 1024) { // 1MB Limit for Firestore Document
+        showToast("حجم الصورة كبير جداً (الأقصى 1 ميجا)");
+        return;
+      }
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        callback(reader.result);
+      };
+      reader.readAsDataURL(file);
     }
+  };
 
-    const root = ReactDOM.createRoot(document.getElementById('root'));
-    root.render(<App />);
-</script>
-</body>
-</html>
+  // --- Auth & Data Initialisation ---
+  useEffect(() => {
+    const initAuth = async () => {
+      try {
+        if (!auth.currentUser) {
+          if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+            await signInWithCustomToken(auth, __initial_auth_token);
+          } else {
+            await signInAnonymously(auth);
+          }
+        }
+      } catch (err) { setLoading(false); }
+    };
+    initAuth();
+
+    const unsubscribe = onAuthStateChanged(auth, async (u) => {
+      if (u) {
+        try {
+          const userDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'users', u.uid);
+          const docSnap = await getDoc(userDocRef);
+          if (docSnap.exists()) {
+            setCurrentUserData(docSnap.data());
+            setUser(u);
+            if (view === 'auth') setView('feed');
+          } else {
+            setUser(u);
+            setView('auth');
+          }
+        } catch (error) { setUser(u); setView('auth'); }
+      } else {
+        setUser(null);
+        setCurrentUserData(null);
+        setView('auth');
+      }
+      setLoading(false);
+    });
+    return () => unsubscribe();
+  }, [appId]);
+
+  useEffect(() => {
+    if (!user || !currentUserData) return;
+
+    const unsubPosts = onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'posts'), (s) => setPosts(s.docs.map(d => ({id:d.id, ...d.data()}))), (err) => {});
+    const unsubStories = onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'stories'), (s) => setStories(s.docs.map(d => ({id:d.id, ...d.data()}))), (err) => {});
+    const unsubUsers = onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'users'), (s) => setAllUsers(s.docs.map(d => ({id:d.id, ...d.data()}))), (err) => {});
+    const unsubMatches = onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'matches'), (s) => setMatches(s.docs.map(d => ({id:d.id, ...d.data()}))), (err) => {});
+    const unsubReels = onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'reels'), (s) => setReels(s.docs.map(d => ({id:d.id, ...d.data()}))), (err) => {});
+
+    return () => { unsubPosts(); unsubStories(); unsubUsers(); unsubMatches(); unsubReels(); };
+  }, [user, currentUserData, appId]);
+
+  // --- Actions ---
+  const handleLogout = async () => {
+    setLoading(true);
+    await signOut(auth);
+    await signInAnonymously(auth);
+    setCurrentUserData(null);
+    setView('auth');
+    setLoading(false);
+  };
+
+  const publishContent = async (text, mediaData = '') => {
+    if (!text.trim() && !mediaData) return;
+    const collectionName = publishType === 'post' ? 'posts' : publishType === 'story' ? 'stories' : 'reels';
+    try {
+      await addDoc(collection(db, 'artifacts', appId, 'public', 'data', collectionName), {
+        text,
+        mediaUrl: mediaData,
+        authorId: user.uid,
+        authorName: currentUserData.name,
+        authorUser: currentUserData.username,
+        authorImage: currentUserData.profileImage || '',
+        createdAt: Date.now(),
+        expiresAt: publishType === 'story' ? Date.now() + (24 * 60 * 60 * 1000) : null
+      });
+      showToast('تم النشر بنجاح');
+      setShowPublisher(false);
+    } catch (e) { showToast('خطأ في النشر'); }
+  };
+
+  const updateProfile = async (updates) => {
+    try {
+      await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users', user.uid), updates);
+      setCurrentUserData(prev => ({...prev, ...updates}));
+      showToast('تم تحديث البيانات');
+      setEditingProfile(false);
+    } catch (e) { showToast('خطأ في التحديث'); }
+  };
+
+  // --- Components ---
+  const AuthScreen = () => {
+    const [isLogin, setIsLogin] = useState(true);
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    const [username, setUsername] = useState('');
+    const [authLoading, setAuthLoading] = useState(false);
+
+    const handleAuth = async (e) => {
+      e.preventDefault();
+      setAuthLoading(true);
+      const isAdmin = (email === 'sarzix2005@gmail.com' && password === 'mostafa0599');
+      try {
+        const userData = {
+          uid: user.uid,
+          email: email.trim().toLowerCase(),
+          username: isAdmin ? 'SARZIX' : (username || "user_" + user.uid.slice(0, 4)),
+          name: isAdmin ? 'SARZIX' : (username || "مشجع جديد"),
+          isAdmin,
+          followersCount: isAdmin ? 1000000 : 0,
+          followingCount: 0,
+          createdAt: Date.now(),
+          bio: isAdmin ? "المطور الرسمي لـ SARZIX" : "عاشق للكرة",
+          profileImage: '',
+          lastUsernameChange: 0,
+          lastNameChange: 0,
+          following: []
+        };
+        await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users', user.uid), userData);
+        setCurrentUserData(userData);
+        setView('feed');
+      } catch (err) { showToast('خطأ في التسجيل'); }
+      finally { setAuthLoading(false); }
+    };
+
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen bg-slate-950 text-white p-6">
+        <div className="w-full max-w-md bg-slate-900 p-10 rounded-[3rem] border border-slate-800 shadow-2xl">
+          <h1 className="text-7xl font-black text-emerald-400 text-center tracking-tighter mb-10">SARZIX</h1>
+          <form onSubmit={handleAuth} className="space-y-4">
+            {!isLogin && <input type="text" placeholder="اسم المستخدم" value={username} onChange={e=>setUsername(e.target.value)} className="w-full p-5 rounded-3xl bg-slate-950 border-2 border-slate-800 outline-none focus:border-emerald-500 font-bold" required/>}
+            <input type="email" placeholder="البريد الإلكتروني" value={email} onChange={e=>setEmail(e.target.value)} className="w-full p-5 rounded-3xl bg-slate-950 border-2 border-slate-800 outline-none focus:border-emerald-500 font-bold" required/>
+            <input type="password" placeholder="كلمة المرور" value={password} onChange={e=>setPassword(e.target.value)} className="w-full p-5 rounded-3xl bg-slate-950 border-2 border-slate-800 outline-none focus:border-emerald-500 font-bold" required/>
+            <button type="submit" className="w-full bg-emerald-500 text-slate-950 font-black py-5 rounded-3xl text-xl">{isLogin ? 'دخول' : 'إنشاء حساب'}</button>
+          </form>
+          <button onClick={()=>setIsLogin(!isLogin)} className="w-full text-center mt-6 text-slate-500 font-bold">{isLogin ? "سجل الآن" : "لديك حساب؟ ادخل"}</button>
+        </div>
+      </div>
+    );
+  };
+
+  const PublisherModal = () => {
+    const [content, setContent] = useState('');
+    const [media, setMedia] = useState('');
+    const fileInputRef = useRef(null);
+
+    return (
+      <div className="fixed inset-0 bg-slate-950 z-[1000] p-6 flex flex-col animate-in slide-in-from-bottom duration-300">
+        <div className="flex justify-between items-center mb-6">
+          <X className="text-slate-500" onClick={()=>setShowPublisher(false)}/>
+          <div className="flex gap-4">
+             {['post', 'story', 'reel'].map(t => (
+               <button key={t} onClick={()=>setPublishType(t)} className={`text-xs font-black px-4 py-2 rounded-full ${publishType === t ? 'bg-emerald-500 text-slate-950' : 'bg-slate-900 text-slate-500'}`}>{t.toUpperCase()}</button>
+             ))}
+          </div>
+          <button onClick={()=>publishContent(content, media)} className="bg-emerald-500 text-slate-950 px-6 py-2 rounded-full font-black text-sm">نشر</button>
+        </div>
+        <textarea autoFocus placeholder={publishType === 'post' ? "ماذا يدور في ذهنك؟" : "أضف وصفاً لمحتواك.."} className="w-full flex-1 bg-transparent text-white text-xl outline-none resize-none font-medium" value={content} onChange={e=>setContent(e.target.value)}/>
+        
+        {media && (
+          <div className="mb-4 relative rounded-3xl overflow-hidden border border-slate-800 max-h-40 bg-slate-900">
+             <img src={media} className="w-full h-full object-cover opacity-50" />
+             <button onClick={()=>setMedia('')} className="absolute top-2 right-2 bg-black/50 p-2 rounded-full text-white"><X size={16}/></button>
+          </div>
+        )}
+
+        <div className="bg-slate-900 p-4 rounded-3xl flex items-center justify-between gap-3">
+           <div className="flex items-center gap-3">
+             <Camera size={20} className="text-slate-500"/>
+             <span className="text-sm text-slate-500 font-bold">{media ? "تم اختيار صورة" : "ارفق صورة/فيديو من جهازك"}</span>
+           </div>
+           <button onClick={() => fileInputRef.current?.click()} className="bg-slate-800 p-2 rounded-xl text-emerald-500"><Upload size={18}/></button>
+           <input type="file" ref={fileInputRef} hidden accept="image/*,video/*" onChange={(e) => handleImageUpload(e, setMedia)} />
+        </div>
+      </div>
+    );
+  };
+
+  const FeedView = () => {
+    const forYouPosts = posts.sort((a,b) => b.createdAt - a.createdAt);
+    const followingPosts = posts.filter(p => currentUserData.following?.includes(p.authorId) || p.authorId === user.uid).sort((a,b) => b.createdAt - a.createdAt);
+    const activeStories = stories.filter(s => s.expiresAt > Date.now());
+
+    return (
+      <div className="pb-24">
+        <div className="sticky top-0 bg-slate-950/90 backdrop-blur-xl border-b border-slate-900 z-[80] flex">
+          <button onClick={()=>setFeedTab('forYou')} className={`flex-1 py-4 font-black text-sm ${feedTab === 'forYou' ? 'text-white border-b-2 border-emerald-500' : 'text-slate-600'}`}>لك</button>
+          <button onClick={()=>setFeedTab('following')} className={`flex-1 py-4 font-black text-sm ${feedTab === 'following' ? 'text-white border-b-2 border-emerald-500' : 'text-slate-600'}`}>متابعة</button>
+        </div>
+
+        <div className="p-4 flex gap-4 overflow-x-auto no-scrollbar border-b border-slate-900">
+           <div className="flex-shrink-0 flex flex-col items-center gap-2">
+              <div onClick={() => {setPublishType('story'); setShowPublisher(true)}} className="w-16 h-16 rounded-full border-2 border-dashed border-slate-700 flex items-center justify-center text-slate-500 cursor-pointer"><Plus size={20}/></div>
+              <span className="text-[10px] text-slate-500 font-bold">قصتك</span>
+           </div>
+           {activeStories.map(s => (
+             <div key={s.id} className="flex-shrink-0 flex flex-col items-center gap-2">
+               <div className="w-16 h-16 rounded-full border-2 border-emerald-500 p-0.5"><div className="w-full h-full rounded-full bg-slate-800 overflow-hidden">{s.authorImage ? <img src={s.authorImage} className="w-full h-full object-cover"/> : <div className="flex items-center justify-center h-full font-black text-white">{s.authorUser.charAt(0)}</div>}</div></div>
+               <span className="text-[10px] text-slate-300 font-bold">{s.authorUser}</span>
+             </div>
+           ))}
+        </div>
+
+        {(feedTab === 'forYou' ? forYouPosts : followingPosts).map(p => (
+          <div key={p.id} className="p-6 border-b border-slate-900 flex gap-4 animate-in fade-in duration-500">
+             <div className="w-12 h-12 rounded-2xl bg-slate-800 flex-shrink-0 overflow-hidden border border-slate-800">
+               {p.authorImage ? <img src={p.authorImage} className="w-full h-full object-cover"/> : <div className="w-full h-full flex items-center justify-center font-black text-white">{p.authorUser.charAt(0)}</div>}
+             </div>
+             <div className="flex-1">
+               <div className="flex items-center gap-2 mb-1">
+                 <span className="font-black text-white text-sm">{p.authorName}</span>
+                 {p.authorUser === 'SARZIX' && <Shield size={12} className="text-emerald-400 fill-emerald-400/10"/>}
+                 <span className="text-slate-600 text-[10px]">@{p.authorUser}</span>
+               </div>
+               <p className="text-slate-300 text-sm leading-relaxed mb-3">{p.text}</p>
+               {p.mediaUrl && <div className="rounded-3xl overflow-hidden border border-slate-800 mb-3"><img src={p.mediaUrl} className="w-full h-auto max-h-80 object-cover" /></div>}
+               <div className="flex gap-8 text-slate-600">
+                 <div className="flex items-center gap-1 cursor-pointer"><Heart size={16}/><span className="text-[10px] font-bold">0</span></div>
+                 <div className="flex items-center gap-1 cursor-pointer"><Repeat size={16}/><span className="text-[10px] font-bold">0</span></div>
+               </div>
+             </div>
+          </div>
+        ))}
+      </div>
+    );
+  };
+
+  const ReelsView = () => {
+    return (
+      <div className="h-full bg-black relative flex flex-col pb-24 snap-y snap-mandatory overflow-y-auto no-scrollbar">
+        {reels.length === 0 ? (
+          <div className="flex-1 flex flex-col items-center justify-center text-slate-700">
+            <Clapperboard size={60} className="mb-4 opacity-20"/>
+            <p className="font-black">لا توجد ريلز حالياً</p>
+          </div>
+        ) : reels.map(r => (
+          <div key={r.id} className="h-full w-full flex-shrink-0 snap-start relative flex flex-col justify-end p-6">
+             {r.mediaUrl && <div className="absolute inset-0 z-0"><img src={r.mediaUrl} className="w-full h-full object-cover opacity-60" /></div>}
+             <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent pointer-events-none"/>
+             <div className="relative z-10 flex flex-col gap-2">
+               <div className="flex items-center gap-3 mb-2">
+                 <div className="w-10 h-10 rounded-full border-2 border-emerald-500 overflow-hidden">{r.authorImage ? <img src={r.authorImage} className="w-full h-full object-cover"/> : <div className="flex items-center justify-center h-full bg-slate-800 font-black text-white">{r.authorUser.charAt(0)}</div>}</div>
+                 <span className="font-black text-white text-sm">@{r.authorUser}</span>
+                 <button className="bg-emerald-500 text-slate-950 px-3 py-1 rounded-full text-[10px] font-black">متابعة</button>
+               </div>
+               <p className="text-white text-sm mb-4">{r.text}</p>
+             </div>
+             <div className="absolute right-4 bottom-32 flex flex-col gap-6 text-white items-center z-10">
+               <div className="flex flex-col items-center"><Heart size={28} className="fill-white/10"/><span className="text-xs font-bold">0</span></div>
+               <div className="flex flex-col items-center"><MessageCircle size={28}/><span className="text-xs font-bold">0</span></div>
+               <Repeat size={28}/>
+             </div>
+          </div>
+        ))}
+        <button onClick={()=>{setPublishType('reel'); setShowPublisher(true)}} className="fixed bottom-32 left-6 bg-white/10 backdrop-blur-md p-4 rounded-full text-white border border-white/20 active:scale-90 transition-all z-[120]"><Plus/></button>
+      </div>
+    );
+  };
+
+  const PredictionsView = () => {
+    const [team1, setTeam1] = useState('');
+    const [team2, setTeam2] = useState('');
+    const [timer, setTimer] = useState('60');
+
+    const addMatch = async () => {
+      if(!team1 || !team2) return;
+      try {
+        await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'matches'), {
+          team1, team2,
+          expiresAt: Date.now() + (parseInt(timer) * 60 * 1000),
+          showUntil: Date.now() + (parseInt(timer) * 120 * 1000), 
+          votes: { team1: 0, draw: 0, team2: 0 },
+          voters: []
+        });
+        setShowMatchCreator(false);
+        showToast('تمت إضافة المباراة');
+      } catch (e) { showToast('فشل الإضافة'); }
+    };
+
+    return (
+      <div className="p-6 pb-24">
+        <div className="flex justify-between items-center mb-8">
+          <h2 className="text-3xl font-black text-white">التوقعات</h2>
+          {currentUserData.isAdmin && <button onClick={()=>setShowMatchCreator(true)} className="bg-emerald-500 p-2 rounded-xl text-slate-950"><Plus/></button>}
+        </div>
+
+        {showMatchCreator && (
+          <div className="mb-8 bg-slate-900 p-6 rounded-3xl border border-emerald-500/20 space-y-4 animate-in slide-in-from-top">
+            <div className="flex gap-2">
+              <input placeholder="الفريق 1" value={team1} onChange={e=>setTeam1(e.target.value)} className="flex-1 bg-slate-950 p-3 rounded-xl text-sm text-white border border-slate-800 outline-none focus:border-emerald-500"/>
+              <input placeholder="الفريق 2" value={team2} onChange={e=>setTeam2(e.target.value)} className="flex-1 bg-slate-950 p-3 rounded-xl text-sm text-white border border-slate-800 outline-none focus:border-emerald-500"/>
+            </div>
+            <input type="number" placeholder="المؤقت بالدقائق" value={timer} onChange={e=>setTimer(e.target.value)} className="w-full bg-slate-950 p-3 rounded-xl text-sm text-white border border-slate-800"/>
+            <div className="flex gap-2">
+               <button onClick={addMatch} className="flex-1 bg-emerald-500 text-slate-950 font-black py-3 rounded-xl">تفعيل المباراة</button>
+               <button onClick={()=>setShowMatchCreator(false)} className="flex-1 bg-slate-800 text-white font-black py-3 rounded-xl">إلغاء</button>
+            </div>
+          </div>
+        )}
+
+        <div className="space-y-4">
+           {matches.filter(m => m.showUntil > Date.now()).map(m => {
+             const totalVotes = (m.votes.team1 + m.votes.draw + m.votes.team2) || 1;
+             const active = m.expiresAt > Date.now();
+             return (
+               <div key={m.id} className="bg-slate-900 p-6 rounded-[2.5rem] border border-slate-800">
+                  <div className="flex justify-between items-center mb-6">
+                    <span className="text-white font-black text-lg">{m.team1}</span>
+                    <span className="text-slate-600 font-black italic">VS</span>
+                    <span className="text-white font-black text-lg">{m.team2}</span>
+                  </div>
+                  
+                  {active ? (
+                    <div className="flex gap-2 mb-4">
+                      {['team1', 'draw', 'team2'].map(type => (
+                        <button key={type} className="flex-1 bg-slate-950 py-3 rounded-2xl text-[10px] font-black text-slate-400 border border-slate-800 active:bg-emerald-500 active:text-slate-950 transition-colors">
+                          {type === 'draw' ? 'تعادل' : type === 'team1' ? m.team1 : m.team2}
+                        </button>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="bg-slate-950 p-4 rounded-3xl space-y-3 mb-4">
+                      <div className="flex items-center justify-between text-[10px] font-black">
+                        <span className="text-white">{m.team1} ({Math.round((m.votes.team1/totalVotes)*100)}%)</span>
+                        <div className="w-1/2 h-1 bg-slate-800 rounded-full overflow-hidden"><div className="h-full bg-emerald-500" style={{width: `${(m.votes.team1/totalVotes)*100}%`}}></div></div>
+                      </div>
+                      <div className="flex items-center justify-between text-[10px] font-black">
+                        <span className="text-white">تعادل ({Math.round((m.votes.draw/totalVotes)*100)}%)</span>
+                        <div className="w-1/2 h-1 bg-slate-800 rounded-full overflow-hidden"><div className="h-full bg-slate-500" style={{width: `${(m.votes.draw/totalVotes)*100}%`}}></div></div>
+                      </div>
+                      <div className="flex items-center justify-between text-[10px] font-black">
+                        <span className="text-white">{m.team2} ({Math.round((m.votes.team2/totalVotes)*100)}%)</span>
+                        <div className="w-1/2 h-1 bg-slate-800 rounded-full overflow-hidden"><div className="h-full bg-emerald-500" style={{width: `${(m.votes.team2/totalVotes)*100}%`}}></div></div>
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="flex justify-center items-center gap-2 text-[10px] font-bold text-slate-600">
+                    <Clock size={12}/>
+                    {active ? "توقعاتك مطلوبة الآن" : "انتهى وقت التوقع"}
+                  </div>
+               </div>
+             );
+           })}
+        </div>
+      </div>
+    );
+  };
+
+  const ProfileView = () => {
+    const [name, setName] = useState(currentUserData.name);
+    const [userN, setUserN] = useState(currentUserData.username);
+    const [bio, setBio] = useState(currentUserData.bio || '');
+    const [img, setImg] = useState(currentUserData.profileImage || '');
+    const profileFileInputRef = useRef(null);
+
+    const handleSave = async () => {
+      const now = Date.now();
+      const updates = { bio, profileImage: img };
+      
+      if(name !== currentUserData.name) {
+        if(!currentUserData.isAdmin && now - (currentUserData.lastNameChange || 0) < 7 * 24 * 60 * 60 * 1000) { showToast('تغيير الاسم مسموح كل 7 أيام'); return; }
+        updates.name = name; updates.lastNameChange = now;
+      }
+      
+      if(userN !== currentUserData.username) {
+        if(!currentUserData.isAdmin && now - (currentUserData.lastUsernameChange || 0) < 30 * 24 * 60 * 60 * 1000) { showToast('تغيير اليوزر مسموح كل 30 يوماً'); return; }
+        updates.username = userN; updates.lastUsernameChange = now;
+      }
+      
+      await updateProfile(updates);
+    };
+
+    return (
+      <div className="p-10 text-center pb-24 animate-in zoom-in">
+        <div className="flex justify-between items-center mb-8">
+           {currentUserData.isAdmin && <button onClick={()=>setAdminSearchOpen(true)} className="p-3 rounded-2xl bg-slate-900 border border-slate-800 text-emerald-500"><Settings size={20}/></button>}
+           <button onClick={()=>setEditingProfile(!editingProfile)} className="p-3 rounded-2xl bg-slate-900 border border-slate-800 text-slate-500"><Edit3 size={20}/></button>
+        </div>
+
+        <div className="relative group mx-auto w-40 h-40 mb-6">
+          <div className="w-40 h-40 mx-auto rounded-[3.5rem] border-4 border-emerald-500 overflow-hidden shadow-2xl ring-8 ring-emerald-500/5 bg-slate-900">
+             {img ? <img src={img} className="w-full h-full object-cover"/> : <div className="w-full h-full flex items-center justify-center text-7xl font-black text-emerald-500">{currentUserData.username.charAt(0)}</div>}
+          </div>
+          {editingProfile && (
+            <button onClick={() => profileFileInputRef.current?.click()} className="absolute bottom-2 right-2 bg-emerald-500 p-3 rounded-full text-slate-950 shadow-xl border-4 border-slate-950"><Camera size={18}/></button>
+          )}
+          <input type="file" ref={profileFileInputRef} hidden accept="image/*" onChange={(e) => handleImageUpload(e, setImg)} />
+        </div>
+
+        {editingProfile ? (
+          <div className="space-y-4 mb-8">
+             <input value={name} onChange={e=>setName(e.target.value)} placeholder="الاسم" className="w-full bg-slate-900 p-4 rounded-2xl text-sm font-black text-white border border-slate-800 outline-none"/>
+             <input value={userN} onChange={e=>setUserN(e.target.value)} placeholder="اليوزر" className="w-full bg-slate-900 p-4 rounded-2xl text-sm font-black text-white border border-slate-800 outline-none"/>
+             <textarea value={bio} onChange={e=>setBio(e.target.value)} placeholder="الوصف" className="w-full bg-slate-900 p-4 rounded-2xl text-sm font-bold text-white border border-slate-800 outline-none h-24"/>
+             <button onClick={handleSave} className="w-full bg-emerald-500 text-slate-950 font-black py-4 rounded-2xl">حفظ التغييرات</button>
+          </div>
+        ) : (
+          <>
+            <h2 className="text-3xl font-black text-white">{currentUserData.name}</h2>
+            <p className="text-emerald-500 font-black mb-4 flex items-center justify-center gap-1">@{currentUserData.username} {currentUserData.isAdmin && <Check size={12} className="bg-emerald-500 text-slate-950 rounded-full p-0.5"/>}</p>
+            <p className="text-slate-400 text-sm mb-10 px-6 leading-relaxed">{currentUserData.bio}</p>
+          </>
+        )}
+
+        <div className="grid grid-cols-2 gap-4 mb-10">
+           <div className="bg-slate-900/50 p-6 rounded-3xl border border-slate-800">
+             <div className="text-2xl font-black text-white">{formatNumber(currentUserData.followersCount)}</div>
+             <div className="text-[10px] text-slate-600 font-black">متابع</div>
+           </div>
+           <div className="bg-slate-900/50 p-6 rounded-3xl border border-slate-800">
+             <div className="text-2xl font-black text-white">{formatNumber(currentUserData.followingCount)}</div>
+             <div className="text-[10px] text-slate-600 font-black">يتابع</div>
+           </div>
+        </div>
+        <button onClick={handleLogout} className="w-full bg-red-500/5 text-red-500 py-5 rounded-3xl font-black text-xs border border-red-500/10 active:bg-red-500 active:text-white transition-all">تسجيل خروج</button>
+      </div>
+    );
+  };
+
+  const SearchView = () => {
+    const [q, setQ] = useState('');
+    const searchedUsers = allUsers.filter(u => u.username.toLowerCase().includes(q.toLowerCase()) || u.name.includes(q)).slice(0, 5);
+    const trends = ['نيمار_هلالي', 'دوري_الابطال', 'SARZIX_ON_TOP', 'برشلونة_ريال_مدريد'];
+
+    return (
+      <div className="p-6 pb-24">
+        <div className="relative mb-8">
+           <SearchIcon className="absolute right-4 top-4 text-slate-600" size={20}/>
+           <input placeholder="ابحث عن أصدقاء..." value={q} onChange={e=>setQ(e.target.value)} className="w-full bg-slate-900 p-4 pr-12 rounded-3xl text-sm text-white border border-slate-800 outline-none focus:border-emerald-500 font-bold"/>
+        </div>
+
+        {q && (
+          <div className="mb-10 space-y-4 animate-in fade-in">
+             {searchedUsers.map(u => (
+               <div key={u.id} className="flex items-center justify-between bg-slate-900/40 p-4 rounded-3xl border border-slate-800/50">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-slate-800 overflow-hidden border border-slate-700">{u.profileImage ? <img src={u.profileImage} className="w-full h-full object-cover"/> : <div className="flex items-center justify-center h-full font-black text-white">{u.username.charAt(0)}</div>}</div>
+                    <div className="text-sm"><p className="text-white font-black">{u.name}</p><p className="text-slate-500 text-[10px]">@{u.username}</p></div>
+                  </div>
+                  <button className="bg-emerald-500 text-slate-950 px-4 py-2 rounded-xl text-[10px] font-black">متابعة</button>
+               </div>
+             ))}
+          </div>
+        )}
+
+        <h3 className="text-white font-black mb-6 flex items-center gap-2"><Flame size={18} className="text-orange-500"/> الترند الحالي</h3>
+        <div className="space-y-4">
+           {trends.map(t => (
+             <div key={t} className="bg-slate-900/30 p-6 rounded-[2rem] border border-slate-900 flex justify-between items-center active:bg-slate-900 transition-colors">
+               <span className="text-white font-black">#{t}</span>
+               <BarChart3 size={16} className="text-slate-700"/>
+             </div>
+           ))}
+        </div>
+      </div>
+    );
+  };
+
+  if (loading) return <div className="h-screen bg-slate-950 flex flex-col items-center justify-center"><h1 className="text-7xl font-black text-emerald-400 animate-pulse tracking-tighter">SARZIX</h1></div>;
+  if (!user || (!currentUserData && view === 'auth')) return <AuthScreen />;
+
+  const filteredAdminUsers = allUsers.filter(u => u.username.toLowerCase().includes(adminSearchQuery.toLowerCase()) || u.name.includes(adminSearchQuery));
+
+  return (
+    <div className="max-w-md mx-auto h-screen bg-slate-950 relative overflow-hidden flex flex-col font-sans select-none" style={{ direction: 'rtl' }}>
+      {toast && <div className="fixed top-10 left-1/2 -translate-x-1/2 bg-white text-slate-950 px-8 py-3 rounded-full z-[2000] shadow-2xl font-black text-xs animate-in slide-in-from-top">{toast}</div>}
+      
+      {showPublisher && <PublisherModal />}
+      
+      {adminSearchOpen && (
+        <div className="fixed inset-0 bg-slate-950 z-[1500] p-6 animate-in slide-in-from-left duration-300 flex flex-col">
+          <div className="flex justify-between items-center mb-6">
+            <X className="text-white" onClick={()=>setAdminSearchOpen(false)}/>
+            <h2 className="text-xl font-black text-emerald-400">تحكم الأدمن</h2>
+            <Shield className="text-emerald-500"/>
+          </div>
+          
+          <div className="relative mb-6">
+            <SearchIcon className="absolute right-4 top-4 text-slate-600" size={18}/>
+            <input placeholder="ابحث عن حساب للتحكم..." value={adminSearchQuery} onChange={e=>setAdminSearchQuery(e.target.value)} className="w-full bg-slate-900 p-4 pr-12 rounded-2xl text-xs text-white border border-slate-800 outline-none focus:border-emerald-500"/>
+          </div>
+
+          <div className="flex-1 overflow-y-auto space-y-3 no-scrollbar">
+            {filteredAdminUsers.map(u => (
+               <div key={u.id} className="bg-slate-900 p-4 rounded-2xl flex justify-between items-center border border-slate-800">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-full bg-slate-800 overflow-hidden">{u.profileImage ? <img src={u.profileImage} className="w-full h-full object-cover"/> : <div className="flex items-center justify-center h-full text-[10px] text-white font-bold">{u.username.charAt(0)}</div>}</div>
+                    <div className="text-xs font-bold text-white">@{u.username}</div>
+                  </div>
+                  <button onClick={()=>{setAdminTargetUser(u); setAdminSearchOpen(false)}} className="bg-emerald-500 text-slate-950 px-4 py-2 rounded-xl text-[10px] font-black">تعديل</button>
+               </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {adminTargetUser && <div className="fixed inset-0 bg-black/90 backdrop-blur-md z-[1600] flex items-center justify-center p-6 animate-in zoom-in">
+          <div className="bg-slate-900 w-full rounded-[3rem] p-10 border border-emerald-500/30">
+             <h3 className="text-white font-black mb-6 text-center">إدارة: {adminTargetUser.name}</h3>
+             
+             <div className="space-y-4 mb-6">
+                <div>
+                  <label className="text-[10px] text-slate-500 font-bold mb-1 block mr-2">تعديل المتابعين</label>
+                  <input type="number" placeholder="متابعين" defaultValue={adminTargetUser.followersCount} className="w-full bg-slate-950 p-4 rounded-2xl text-white outline-none border border-slate-800" onChange={e => {
+                    const val = e.target.value;
+                    if(val) updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users', adminTargetUser.uid), { followersCount: parseInt(val) });
+                  }}/>
+                </div>
+
+                <div>
+                  <label className="text-[10px] text-slate-500 font-bold mb-1 block mr-2">تعديل اليوزر (ID)</label>
+                  <input type="text" placeholder="اليوزر الجديد" defaultValue={adminTargetUser.username} className="w-full bg-slate-950 p-4 rounded-2xl text-white outline-none border border-slate-800" onChange={e => {
+                    const val = e.target.value;
+                    if(val) updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users', adminTargetUser.uid), { username: val });
+                  }}/>
+                </div>
+             </div>
+
+             <div className="flex gap-2">
+               <button onClick={()=>setAdminTargetUser(null)} className="flex-1 bg-emerald-500 py-4 rounded-2xl font-black text-slate-950">حفظ وإغلاق</button>
+               <button onClick={async () => { await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users', adminTargetUser.uid)); setAdminTargetUser(null); showToast('تم الحذف'); }} className="flex-1 bg-red-500 py-4 rounded-2xl font-black text-white">حذف الحساب</button>
+             </div>
+          </div>
+      </div>}
+
+      <div className="flex-1 overflow-y-auto no-scrollbar scroll-smooth">
+        {view === 'feed' && <FeedView />}
+        {view === 'reels' && <ReelsView />}
+        {view === 'search' && <SearchView />}
+        {view === 'predictions' && <PredictionsView />}
+        {view === 'profile' && <ProfileView />}
+      </div>
+
+      {view === 'feed' && (
+        <button onClick={()=>{setPublishType('post'); setShowPublisher(true)}} className="fixed bottom-32 left-8 bg-emerald-500 text-slate-950 p-5 rounded-full shadow-2xl shadow-emerald-500/20 active:scale-90 transition-all z-[90] animate-bounce">
+          <Feather size={28}/>
+        </button>
+      )}
+
+      <nav className="bg-slate-950/95 backdrop-blur-3xl border-t border-slate-900 p-8 flex justify-around items-center z-[200]">
+        {[
+          {v:'feed', i:Home}, {v:'search', i:Search}, {v:'reels', i:Clapperboard}, {v:'predictions', i:Trophy}, {v:'profile', i:User}
+        ].map(item => (
+          <button key={item.v} onClick={()=>setView(item.v)} className={`transition-all duration-300 relative ${view === item.v ? 'text-emerald-400 scale-125' : 'text-slate-700 hover:text-slate-400'}`}>
+            <item.i size={24} strokeWidth={view === item.v ? 3 : 2}/>
+          </button>
+        ))}
+      </nav>
+    </div>
+  );
+}
