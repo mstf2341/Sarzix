@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>SARZIX | المنصة الرياضية</title>
+
+<script src="[https://cdn.tailwindcss.com](https://cdn.tailwindcss.com)"></script>
+<script src="[https://unpkg.com/lucide@latest](https://unpkg.com/lucide@latest)"></script>
+<script src="[https://unpkg.com/react@18/umd/react.production.min.js](https://unpkg.com/react@18/umd/react.production.min.js)"></script>
+<script src="[https://unpkg.com/react-dom@18/umd/react-dom.production.min.js](https://unpkg.com/react-dom@18/umd/react-dom.production.min.js)"></script>
+<script src="[https://unpkg.com/@babel/standalone/babel.min.js](https://unpkg.com/@babel/standalone/babel.min.js)"></script>
+
+<script src="[https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js](https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js)"></script>
+<script src="[https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js](https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js)"></script>
+<script src="[https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js](https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js)"></script>
+
+<style>
+    @import url('[https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap](https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap)');
+    body { font-family: 'Cairo', sans-serif; background-color: #020617; color: white; margin: 0; overflow: hidden; }
+    .glass-panel { background: rgba(15, 23, 42, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.05); }
+    .emerald-glow { box-shadow: 0 0 20px rgba(16, 185, 129, 0.2); }
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    .animate-in { animation: fadeIn 0.4s ease forwards; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel">
+    const firebaseConfig = {
+        apiKey: "AIzaSyAVf3hKrYV0FbH9bOou8WazfCpP4ryKckI",
+        authDomain: "sarzix.firebaseapp.com",
+        projectId: "sarzix",
+        storageBucket: "sarzix.firebasestorage.app",
+        messagingSenderId: "341694908206",
+        appId: "1:341694908206:web:14f31e49094205cf269cbf"
+    };
+
+    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+    const auth = firebase.auth();
+    const APP_ID = 'sarzix_core_v1';
+
+    const Icon = ({ name, size = 24, className = "" }) => {
+        React.useEffect(() => { if (window.lucide) window.lucide.createIcons(); }, [name]);
+        return <i data-lucide={name.toLowerCase()} className={className} style={{ width: size, height: size }}></i>;
+    };
+
+    function App() {
+        const [user, setUser] = React.useState(null);
+        const [posts, setPosts] = React.useState([]);
+        const [view, setView] = React.useState('home');
+        const [inputText, setInputText] = React.useState("");
+        const [loading, setLoading] = React.useState(true);
+
+        React.useEffect(() => {
+            const unsubscribe = auth.onAuthStateChanged(async (u) => {
+                if (u) {
+                    setUser(u);
+                    const unsubPosts = db.collection('artifacts').doc(APP_ID).collection('public').doc('data').collection('feed').orderBy('timestamp', 'desc').onSnapshot(snap => {
+                        setPosts(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+                        setLoading(false);
+                    }, err => { setLoading(false); });
+                    return () => unsubPosts();
+                } else {
+                    await auth.signInAnonymously();
+                }
+            });
+            return () => unsubscribe();
+        }, []);
+
+        const sendPost = async () => {
+            if (!inputText.trim()) return;
+            try {
+                await db.collection('artifacts').doc(APP_ID).collection('public').doc('data').collection('feed').add({
+                    content: inputText,
+                    author: "SARZIX Admin",
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                    likes: 0
+                });
+                setInputText("");
+            } catch (e) { alert("تأكد من تفعيل Firestore Rules."); }
+        };
+
+        const handleLike = async (id, current) => {
+            await db.collection('artifacts').doc(APP_ID).collection('public').doc('data').collection('feed').doc(id).update({ likes: (current || 0) + 1 });
+        };
+
+        if (loading && !user) return <div className="h-screen bg-slate-950 flex items-center justify-center"><h1 className="text-4xl font-black italic text-emerald-500 animate-pulse">SARZIX</h1></div>;
+
+        return (
+            <div className="max-w-md mx-auto h-screen flex flex-col bg-slate-950 border-x border-slate-900 relative">
+                <header className="p-6 flex justify-between items-center bg-slate-950/80 backdrop-blur-md sticky top-0 z-50">
+                    <div>
+                        <h1 className="text-2xl font-black italic text-white">SARZIX</h1>
+                        <p className="text-[10px] text-emerald-500 font-bold uppercase tracking-widest">Global Sports</p>
+                    </div>
+                    <div className="flex gap-2">
+                        <div className="p-2 rounded-xl bg-slate-900 text-slate-400"><Icon name="Search" size={18}/></div>
+                        <div className="p-2 rounded-xl bg-emerald-500 text-slate-950 emerald-glow"><Icon name="Zap" size={18}/></div>
+                    </div>
+                </header>
+
+                <main className="flex-1 overflow-y-auto no-scrollbar p-4 pb-40 space-y-4">
+                    {posts.map(post => (
+                        <div key={post.id} className="glass-panel p-5 rounded-[2rem] animate-in">
+                            <div className="flex items-center gap-3 mb-3">
+                                <div className="w-10 h-10 rounded-2xl bg-emerald-500 flex items-center justify-center text-slate-950 font-black italic">S</div>
+                                <div className="flex-1"><h4 className="text-xs font-black text-white">{post.author}</h4></div>
+                            </div>
+                            <p className="text-sm text-slate-300">{post.content}</p>
+                            <div className="flex gap-4 mt-4 pt-3 border-t border-white/5">
+                                <button onClick={() => handleLike(post.id, post.likes)} className="flex items-center gap-1.5 text-slate-500 hover:text-emerald-400">
+                                    <Icon name="Heart" size={16}/><span className="text-[10px] font-bold">{post.likes || 0}</span>
+                                </button>
+                            </div>
+                        </div>
+                    ))}
+                </main>
+
+                <div className="fixed bottom-0 left-0 right-0 max-w-md mx-auto p-4 z-50">
+                    <div className="glass-panel rounded-[2.5rem] p-3 shadow-2xl">
+                        <div className="flex items-center gap-2 bg-slate-950 rounded-[1.8rem] px-4 py-1 mb-3 border border-white/5">
+                            <input value={inputText} onChange={(e) => setInputText(e.target.value)} placeholder="ماذا يحدث في عالم الرياضة؟" className="bg-transparent flex-1 py-3 text-xs outline-none text-white font-medium" />
+                            <button onClick={sendPost} className="w-10 h-10 rounded-xl bg-emerald-500 text-slate-950 flex items-center justify-center"><Icon name="Send" size={18}/></button>
+                        </div>
+                        <div className="flex justify-around items-center py-1 text-slate-500">
+                            <button className="text-emerald-500"><Icon name="Home" size={24}/></button>
+                            <button><Icon name="Trophy" size={24}/></button>
+                            <button><Icon name="Compass" size={24}/></button>
+                            <button><Icon name="User" size={24}/></button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+</script>
+</body>
+</html>
